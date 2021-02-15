@@ -8,8 +8,8 @@ object ProdutoDao {
     @JvmStatic var idContador: Int = 0;
 
     @JvmStatic fun adicionarProduto(produto: Produto){
-        listagemProdutos.add(produto)
         produto.id = idContador
+        listagemProdutos.add(produto)
         incrementarId()
     }
 
@@ -24,9 +24,15 @@ object ProdutoDao {
     fun editarProduto(produto: Produto){
         listagemProdutos.forEach {
             if(it.id == produto.id){
-                var posicao:Int = it.id
+                var posicao:Int = listagemProdutos.indexOf(it)
                 listagemProdutos.set(posicao,produto)
             }
+        }
+    }
+
+    fun removerProduto(produto:Produto?){
+        if(produto != null){
+            listagemProdutos.remove(produto)
         }
     }
 }
