@@ -4,6 +4,8 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.ContextMenu
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -32,8 +34,37 @@ class ListagemProdutosActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.listarProdutos()
-        this.editarProduto()
-        this.removerProduto()
+    }
+
+    override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+        menu?.add("Remover")
+        menu?.add("Editar")
+        super.onCreateContextMenu(menu, v, menuInfo)
+    }
+
+    override fun onContextItemSelected(item: MenuItem): Boolean {
+        Log.i("Nome Menu: ",item.title.toString())
+        when(item.title){
+            "Remover" -> removerProduto(item)
+            "Editar" -> editaProduto(item)
+        }
+        return super.onContextItemSelected(item)
+    }
+
+    private fun editaProduto(item: MenuItem){
+        var menuInfo:AdapterView.AdapterContextMenuInfo = item.menuInfo as AdapterView.AdapterContextMenuInfo
+        var produtoSelecionado: Produto? = adapter?.getItem(menuInfo.position)
+        val intent:Intent = Intent(this,FormularioProdutoActivity::class.java)
+        intent.putExtra(ConstantesListagemActivity.CHAVE_PRODUTO_SELECIONADO,produtoSelecionado as Serializable)
+        startActivity(intent)
+    }
+
+    private fun removerProduto(item: MenuItem){
+        var menuInfo:AdapterView.AdapterContextMenuInfo = item.menuInfo as AdapterView.AdapterContextMenuInfo
+        var produtoSelecionado: Produto? = adapter?.getItem(menuInfo.position)
+        adapter?.remove(produtoSelecionado)
+        ProdutoDao.removerProduto(produtoSelecionado)
+        verificarListagemSemProdutos()
     }
 
     private fun inicializarCampos(){
@@ -49,16 +80,6 @@ class ListagemProdutosActivity : AppCompatActivity() {
         }
     }
 
-    private fun removerProduto(){
-        listagemProdutos.setOnItemLongClickListener(AdapterView.OnItemLongClickListener {parent, view, posicao, id ->
-            var produto:Produto = parent.getItemAtPosition(posicao) as Produto
-            adapter?.remove(produto)
-            ProdutoDao.removerProduto(produto)
-            verificarListagemSemProdutos()
-                true
-        })
-    }
-
     private fun verificarListagemSemProdutos() {
         if (ProdutoDao.tamanhoListagem() > 0)
             textoSemProdutosCadastrados.setVisibility(View.INVISIBLE)
@@ -72,14 +93,6 @@ class ListagemProdutosActivity : AppCompatActivity() {
         adapter?.clear()
         adapter?.addAll(ProdutoDao.listagemProdutos)
         listagemProdutos.setAdapter(adapter)
-    }
-
-    private fun editarProduto(){
-        listagemProdutos.setOnItemClickListener(AdapterView.OnItemClickListener { parent, view, position, id ->
-            val intent:Intent = Intent(this,FormularioProdutoActivity::class.java)
-            val produtoSelecionado:Produto = parent.getItemAtPosition(position) as Produto
-            intent.putExtra(ConstantesListagemActivity.CHAVE_PRODUTO_SELECIONADO,produtoSelecionado as Serializable)
-            startActivity(intent)
-        })
+        registerForContextMenu(listagemProdutos)
     }
 }
